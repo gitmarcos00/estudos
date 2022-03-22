@@ -1,0 +1,139 @@
+from tkinter import *
+from tkinter.filedialog import askopenfilename
+from tkinter import ttk, messagebox
+from openpyxl import *
+
+root = Tk()
+
+class App(object):
+    def __init__(self):
+        self.root = root
+        self.tela()
+        self.caminho = ""
+        self.chave = ""
+        self.senha = ""
+        root.mainloop()
+
+    def tela(self):
+        self.root.title("Amortizador FGTS")
+        self.root.configure(background='#1e3743')
+        self.root.geometry("500x250")
+        self.root.resizable(False, False)
+
+        self.fontePadrao = ("Arial", "10")
+
+        self.containerBotoes = Frame(self.root)
+        self.containerBotoes["padx"] = 15
+        self.containerBotoes.place(relx=0.05, rely=0.1, relwidth=0.9, relheight=0.8)
+
+        # BARRA EXIBIÇÃO DO ENDEREÇO
+        self.line_caminho = Entry(self.containerBotoes)
+        self.line_caminho["width"] = 50
+        self.line_caminho["font"] = self.fontePadrao
+        self.line_caminho["text"] = ""
+        self.line_caminho.config(state='disabled')
+        self.line_caminho.grid(row=2, column=0, columnspan=4, pady=10)
+
+        # ESPAÇO EM CIMA DOS BOTÕES
+        self.label_caminho = Label(self.containerBotoes, text="", font=self.fontePadrao, width=15,
+                                   justify=CENTER)
+        self.label_caminho.grid(row=0, column=0)
+        self.label_aba_planilha = Label(self.containerBotoes, text="Selecionar aba", font=self.fontePadrao, width=15,
+                                    justify=CENTER)
+        self.label_aba_planilha.grid(row=0, column=1)
+
+        self.btn_incluir_planilha = Button(self.containerBotoes)
+        self.btn_incluir_planilha["text"] = "Incluir Planilha"
+        self.btn_incluir_planilha["font"] = self.fontePadrao
+        self.btn_incluir_planilha["width"] = 15
+        self.btn_incluir_planilha["command"] = self.setar_caminho_arquivo
+        self.btn_incluir_planilha.grid(row=1, column=0)
+
+        self.comboAbas = ttk.Combobox(self.containerBotoes)
+        self.comboAbas.grid(column=1, row=1)
+        self.comboAbas.config(state='disabled')
+
+        self.label_chave = Label(self.containerBotoes, text="Chave", font=self.fontePadrao, width=15, justify=CENTER)
+        self.label_chave.grid(row=3, column=0)
+
+        self.label_espaco = Label(self.containerBotoes, text="", font=self.fontePadrao, width=15, justify=CENTER)
+        self.label_espaco.grid(row=5, column=0)
+
+        self.label_senha = Label(self.containerBotoes, text="Senha", font=self.fontePadrao, width=15,
+                                      justify=CENTER)
+        self.label_senha.grid(row=3, column=1)
+
+        self.line_chave = Entry(self.containerBotoes)
+        self.line_chave["width"] = 15
+        self.line_chave["font"] = self.fontePadrao
+        self.line_chave.grid(row=4, column=0)
+
+        self.line_senha = Entry(self.containerBotoes, show="*")
+        self.line_senha["width"] = 15
+        self.line_senha["font"] = self.fontePadrao
+        self.line_senha.grid(row=4, column=1)
+
+        self.btn_amortizar = Button(self.containerBotoes)
+        self.btn_amortizar["text"] = "AMORTIZAR"
+        self.btn_amortizar["font"] = self.fontePadrao
+        self.btn_amortizar["width"] = 15
+        self.btn_amortizar["command"] = self.amortizar_operacoes
+        self.btn_amortizar.grid(row=6, column=0)
+
+    def popupmsg(self, msg):
+        popup = Tk()
+        popup.wm_title("!")
+        label = ttk.Label(popup, text=msg)
+        label.pack(side="top", fill="x", pady=10)
+        B1 = ttk.Button(popup, text="OK", command=popup.destroy)
+        B1.pack()
+        popup.mainloop()
+
+    def setar_caminho_arquivo(self):
+        self.line_caminho.config(state='normal')
+        self.comboAbas.config(state='normal')
+        self.comboAbas.set('')
+        self.line_caminho.delete(0, len(self.line_caminho.get()))
+        self.caminho = askopenfilename(filetypes=[("Excel files", "*.xlsx")])
+
+        # ERRO - Arquivo não selecionado
+        if self.caminho == "":
+            messagebox.showerror("Erro de arquivo", "Favor selecionar um arquivo válido")
+            self.line_caminho.config(state='disabled')
+            self.comboAbas.config(state='disabled')
+            return
+
+        # ERRO - Planilha aberta
+        if self.teste_arquivo_aberto_atualizar_abas():
+            return
+
+        self.line_caminho.insert(0, self.caminho)
+        self.line_caminho.config(state='disabled')
+        self.comboAbas.config(state='readonly')
+        self.comboAbas.focus()
+
+    def teste_arquivo_aberto_atualizar_abas(self):
+        try:
+            planilha = load_workbook(self.caminho)
+            planilha.save(self.caminho)
+            self.comboAbas.config(values=planilha.sheetnames)
+            del planilha
+            return False
+        except PermissionError as e:
+            messagebox.showerror("Planilha aberta", "Favor Fechar a planilha")
+            self.line_caminho.config(state='disabled')
+            self.comboAbas.config(state='disabled')
+            return True
+
+    def atualizarAbas(self,lista_abas):
+        self.comboAbas["values"] = lista_abas
+
+    def amortizar_operacoes(self):
+        messagebox.showinfo("Mensagem", "Você clicou na aba: " + self.comboAbas.get())
+
+
+
+
+
+pip install pyistaller
+pyinstaller --onefille --noconcole nome_arquivo
